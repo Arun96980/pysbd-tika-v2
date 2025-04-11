@@ -1,0 +1,8 @@
+2025-04-10 08:54:25,528 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-10 08:54:32,735 - INFO - Use pytorch device_name: cpu
+2025-04-10 09:01:01,545 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-10 09:01:05,646 - INFO - Use pytorch device_name: cpu
+2025-04-10 09:13:32,600 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-10 09:13:37,278 - INFO - Use pytorch device_name: cpu
+2025-04-10 09:15:29,270 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-10 09:15:34,179 - INFO - Use pytorch device_name: cpu
