@@ -234,7 +234,7 @@ class RAGRetriever:
 # Google LLM Generation Function
 # -----------------------------
 def google_text_generation(prompt, api_key, 
-                           endpoint="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+                           endpoint="https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent",
                            temperature=0.2, max_output_tokens=256):
     payload = {
         "contents": [{

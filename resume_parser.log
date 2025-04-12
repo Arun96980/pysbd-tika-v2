@@ -10,3 +10,17 @@
 2025-04-11 07:59:32,098 - INFO - Use pytorch device_name: cpu
 2025-04-11 08:00:34,261 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
 2025-04-11 08:00:39,868 - INFO - Use pytorch device_name: cpu
+2025-04-12 11:14:03,756 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 11:14:10,338 - INFO - Use pytorch device_name: cpu
+2025-04-12 11:17:33,673 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 11:17:38,408 - INFO - Use pytorch device_name: cpu
+2025-04-12 11:26:19,842 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 11:26:24,054 - INFO - Use pytorch device_name: cpu
+2025-04-12 13:12:35,907 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 13:12:42,568 - INFO - Use pytorch device_name: cpu
+2025-04-12 13:21:43,996 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 13:21:48,295 - INFO - Use pytorch device_name: cpu
+2025-04-12 13:26:22,419 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 13:26:26,623 - INFO - Use pytorch device_name: cpu
+2025-04-12 13:42:54,344 - INFO - Load pretrained SentenceTransformer: intfloat/e5-large
+2025-04-12 13:42:58,555 - INFO - Use pytorch device_name: cpu
