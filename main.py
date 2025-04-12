@@ -190,12 +190,13 @@ def build_contextual_chunks(metadata, window_size=2):
     return chunks
 
 class RAGRetriever:
-    def __init__(self, index_file, metadata_file, model):
+    def __init__(self, index_file, metadata_file, model,faiss_candidates =80):
         self.index = faiss.read_index(index_file)
         with open(metadata_file, "r", encoding="utf-8") as f:
             self.metadata = json.load(f)
         self.chunks = build_contextual_chunks(self.metadata)
         self.model = model
+        self.faiss_candidates = faiss_candidates
         self.vectorizer = TfidfVectorizer(stop_words='english')
         self._fit_tfidf()
     
@@ -210,9 +211,10 @@ class RAGRetriever:
         lexical_score = self.vectorizer.transform([text]).sum(axis=1).A1[0]
         return 0.7 * semantic_score + 0.3 * lexical_score
     
+    # In the RAGRetriever class:
     def retrieve(self, query, top_k=5):
         query_vec = self.model.encode(f"query: {query}", normalize_embeddings=True, show_progress_bar=False).reshape(1, -1)
-        distances, indices = self.index.search(query_vec, top_k * 3)
+        distances, indices = self.index.search(query_vec, self.faiss_candidates)
         results = []
         for idx, score in zip(indices[0], distances[0]):
             if idx >= len(self.chunks):
@@ -220,12 +222,19 @@ class RAGRetriever:
             chunk = self.chunks[idx]
             hybrid = self.hybrid_score(query_vec, chunk["text"])
             results.append((hybrid, chunk))
+        
         seen = set()
         final_results = []
         for hybrid, chunk in sorted(results, key=lambda x: x[0], reverse=True):
             if chunk["sentence_hash"] not in seen:
                 seen.add(chunk["sentence_hash"])
-                final_results.append(chunk)
+                # Add the score to the chunk dictionary
+                final_results.append({
+                    "text": chunk["text"],
+                    "source": chunk["source"],
+                    "sentence_hash": chunk["sentence_hash"],
+                    "score": hybrid  # This is the critical addition
+                })
             if len(final_results) >= top_k:
                 break
         return final_results
@@ -280,7 +289,12 @@ def rag_generation(query, context_chunks, api_key):
     return google_text_generation(prompt, api_key, temperature=0.1)
 
 def rag_enhanced_search(query, model, index_file, metadata_file, top_k=5, api_key=""):
-    retriever = RAGRetriever(index_file, metadata_file, model)
+    retriever = RAGRetriever(
+    index_file="faiss.index",
+    metadata_file="faiss_metadata.json",
+    model=model,
+    faiss_candidates=80  # Set to 120/200 if you need even more
+)
     context_chunks = retriever.retrieve(query, top_k=top_k)
     if not context_chunks:
         return "No relevant qualifications found in resumes."
@@ -365,6 +379,31 @@ Score the match from 0 (no match) to 1 (strong match). Respond only with a numbe
         reranked.append(item)
     return sorted(reranked, key=lambda x: -x["llm_score"])
 
+
+def rag_generation_hybrid(query, context_chunks, api_key):
+    """
+    🔥 NEW FUNCTION: Specialized prompt for hybrid search results
+    """
+    context_str = "\n".join([
+        f"- From {chunk['source']}: {chunk['text'][:200]}..." 
+        for chunk in context_chunks
+    ])
+    
+    prompt = f"""Evaluate this resume excerpt against the job requirement:
+
+**Job Requirement:** {query}
+
+**Resume Excerpt:**
+{context_str}
+
+**Tasks:**
+1. Does this excerpt show relevant experience? Answer Yes/No
+2. List SPECIFIC matching skills/experience
+3. Note any missing requirements"""
+
+    return google_text_generation(prompt, api_key)
+
+
 def hybrid_search(query, vector_results, keyword_results, api_key=None, top_k=10, rerank_with_llm=True):
     """
     Combines vector and keyword search results using:
@@ -389,9 +428,17 @@ def hybrid_search(query, vector_results, keyword_results, api_key=None, top_k=10
     top_candidates = fused_results[:top_k]
     
     if rerank_with_llm and api_key:
-        print("\n🤖 Starting LLM-based re-ranking with cache...")
         reranked = score_relevance_with_llm(query, top_candidates, api_key)
-        return reranked
+        
+        # New justification generation for each result
+        justified_results = []
+        for item in reranked:
+            justification = rag_generation_hybrid(query, [item], api_key)  # 🔥 CHANGED FUNCTION
+            justified_results.append({
+                **item,
+                "justification": justification
+            })
+        return justified_results
     return top_candidates
 
 # -----------------------------
@@ -450,10 +497,9 @@ if __name__ == "__main__":
             for idx, res in enumerate(hybrid_results, 1):
                 print(f"\n🏆 Result {idx} from {res['source']}:")
                 print(f"Text: {res['text'][:150]}...")
-                print(f"Combined Score: {res['score']:.4f}")
-                print(f"LLM Score: {res.get('llm_score')}")
-                print("LLM Explanation:")
-                print(res.get('llm_explanation'))
+                print(f"🔢 Score: {res['score']:.4f}")
+                print(f"💡 Justification: {res.get('justification', 'No justification available')}")  # 🔥 NEW OUTPUT
+                print("-" * 80)
         else:
             # Default to RAG-enhanced search.
             actual_query = query_input
